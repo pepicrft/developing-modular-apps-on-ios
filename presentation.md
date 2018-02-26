@@ -163,7 +163,107 @@ slidenumbers: true
 
 ---
 
-# Apps are split in modules that represent **features**
+# Microfeatures
+### **[github.com/pepibumur/microfeatures-guidelines](https://github.com/pepibumur/microfeatures-guidelines)**
+
+---
+
+![50%](images/features.png)
+
+---
+
+# App module
+
+### Navigation
+### App lifecycle events
+### Dependency injector
+
+---
+
+```swift
+// App
+import Core
+
+class Registry {
+  static let client = Client(url: "https://shopify.com")
+  static let analytics = Tracker(providers: [.firebase])
+  static let logger = Logger()
+}
+
+```
+
+---
+
+```swift
+import Product
+import Home
+
+// Module: App
+class HomeCoordinator: HomeDelegate {
+
+  let navigationController: UINavigationController!
+
+  // HomeDelegate
+
+  func didSelectProduct(id: String) {
+    let vc = ProductFeature(id: id, client: Registry.client, analytics: Registry.analytics)
+      .viewController
+    navigationController.pushViewController(productViewController)
+  }
+
+}
+
+```
+
+---
+
+# Features modules
+
+### Can be **product** or **service** features
+
+---
+
+```swift
+import Core
+
+// Module: Product
+public class ProductFeature {
+
+  public init(id: String, client: Client, analytics: Analytics) {
+    // Initialization
+  }
+
+  // !! We just expose UIKit classes
+  public var viewController: UIViewController {
+    // Initialization & dependency injection
+  }
+}
+
+```
+
+---
+
+```swift
+import Core
+
+// Module: BackgroundSync
+public class BackgroundSyncer {
+  public init(client: Client, store: Store) { /* Init */ }
+  public func sync(completion: @escaping (Error?) -> Void)
+}
+
+// Module: App
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+  func application(_ application: UIApplication,
+                     performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+       Registry.backgroundSyncer.sync { error in
+         // Notify completionHandler
+       }
+    }
+}
+
+```
 
 ---
 
@@ -171,16 +271,165 @@ slidenumbers: true
 
 ---
 
-- Search
-- Profile
-- Orders
 
-- *UI* (shared)
-- *Core* (shared)
-- *Testing* (shared)
+```swift
+// Module: Core
+public class Client: Clienting {}
+public class Logger: Logging {}
+public class Store: Storing {}
+public class SecureStore: SecureStoring {}
+
+// Module: CoreTesting
+public class MockClient: Clienting {
+  public var executeCount: UInt!
+  public var executeRequest: URLRequest!
+  public var executeStub: (Any?, Error?)!
+}
+
+```
 
 ---
 
-- Yes! Everything in one repository.
-- Selective continuous integration.
-- Slow CI still
+```swift
+import XCTest
+import Core
+import CoreTesting // 😍
+@testable import BackgroundSync
+
+final class BackgroundSyncerTests: XCTestCase {
+  
+  var client: MockClient!
+  Var store: MockStore!
+  var subject: BackgroundSyncer!
+   
+  override func setUp() {
+    super.setUp()
+    client = MockClient()
+    store = MockStore()
+    subject = BackgroundSyncer(client: client, store: store)
+  }
+
+}
+
+```
+
+---
+
+```swift
+// Module: Testing
+import XCTest
+
+public extension XCTestCase {
+  public func XCTAssertTapa(_ tapa: Tapa, 
+    identifier: String? = nil, 
+    tolerance: CGFloat = 0, 
+    file: StaticString = #file, 
+    line: UInt = #line) {
+      // Asserts the quality of the tapa
+  }
+}
+
+```
+
+---
+
+```swift
+// Module: UI
+public class Color {}
+public class Font {}
+public class CustomView {}
+```
+
+---
+
+![50%](images/features-build.png)
+
+---
+
+# Examples app
+### **Allow developers to try out the features that they build**
+![](images/artic.jpg)
+
+---
+
+# 1 Workspace
+# **Multiple projects**
+### *(fewer git conflicts per project)*
+![](images/road.jpg)
+
+---
+
+# There are **not so cool** features that I didn't mention 
+### *(until now)*
+
+![](images/newyork.jpg)
+
+---
+
+# From the monolith to modules
+# 😅
+![](images/stars.jpg)
+
+---
+
+### 1. Extract build settings into config files.
+### 2. Extract foundation components/extensions.
+### 3. Build new features in modules.
+### 4. Gradually extract the existing features.
+### :warning: **Extracting is not easy** :warning:
+
+---
+
+# Maintaining **more than one** Xcode project
+![](images/sunset.jpg)
+
+---
+
+# Tips to ease maintenance
+
+1. Extract settings into .xcconfig files *(a reusable single source of truth).*
+2. Automate the generation of Xcode projects *(e.g. using XcodeGen).*
+3. Just *Debug* and *Release* configurations.
+
+---
+
+# Continuous integration
+### **(Usually clean builds)**
+
+![](images/skyline.jpg)
+
+---
+
+# Tips to speed up CI builds
+1. Enable *parallelize builds* on your schemes. 
+2. Selective builds on CI.
+
+```yaml
+Modules:
+  - name: Search
+    path: Search/Sources/**
+    build: xcodebuild -workspace Search.xcworkspace -scheme Search
+    dependencies:
+      - Core
+  - name: Core
+    path: Core/Sources/**
+    build: xcodebuild -workspace Core.xcworkspace -scheme Core
+```
+
+---
+
+# Catalisis (coming soon)
+
+- Command line tool written in Ruby.
+- Generates workspaces and projects for the module you are working on.
+- Caches modules to save time on CI and locally.
+- Offers an API to build/test modules.
+
+![](images/snow.jpg)
+
+---
+
+# Thanks!
+### **Slides: https://goo.gl/KAC1EJ**
+
+![](images/thanks.jpg)

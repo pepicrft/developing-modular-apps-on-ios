@@ -420,12 +420,32 @@ Modules:
 
 # Catalisis (coming soon)
 
-- Command line tool written in Ruby.
+- Command line tool.
 - Generates workspaces and projects for the module you are working on.
 - Caches modules to save time on CI and locally.
 - Offers an API to build/test modules.
 
 ![](images/snow.jpg)
+
+---
+
+```shell
+# Examples
+
+catalisis generate-xcodeproj App
+catalisis build Core
+catalisis test Orders
+```
+
+---
+
+# Conclusions
+- Do it of you really need it.
+  - *(reuse or decouple code, save time)*
+- More independent and productive teams.
+- Apple is also improving things.
+- It comes with some costs and lack of tooling *(tools are optimized for monoliths)*
+- A transition into modules is tough.
 
 ---
 
